@@ -7,6 +7,9 @@ public class Main {
     public static String[] facts;
     public static ArrayList<Production> pr = new ArrayList<Production>();
     public static String tab = "   ";
+    public static String tab1 = "  ";
+    public static ArrayList<String> gdb =  new ArrayList<String>();
+    public static int iteration = 0;
 
     public static void readFromFile() throws Exception{
         FileReader fr = new FileReader(fileName);
@@ -64,9 +67,68 @@ public class Main {
         System.out.println(tab + end);
     }
 
+    public static void forwardChaining(){
+        int index;
+        System.out.println(tab + (++iteration) +" ITERACIJA");;
+        for (int i = 0; i < pr.size(); i++){
+            if((index = contain(pr.get(i).getAntecedentai())) != -1){
+                if(pr.get(i).getFlag()) {
+                    System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentai().get(index) + "->" + pr.get(i).getKonsekventas() + " praleidžiame, nes pakelta flag1.");
+                }else{
+                    pr.get(i).setFlag();
+                    gdb.add(pr.get(i).getKonsekventas());
+                    System.out.println(tab + tab1 + "R" + (i + 1)  + ":" + pr.get(i).getAntecedentai().get(index) + "->" + pr.get(i).getKonsekventas() + " taikome. Pakeliame flag1. " + "Faktai " + getFacts() + " ir "  + getGdb() + ".");
+                    forwardChaining();
+                }
+            }else{
+                //System.out.println("indeksas" + i);
+                System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt() + "->" + pr.get(i).getKonsekventas() + " netaikome, nes trūksta " + pr.get(i).getAntecedentaiSt() + ".");
+                //forwardChaining();
+            }
+        }
+    }
+
+    public static int contain(ArrayList<String> ancedentai){
+        for (int j = 0; j < ancedentai.size(); j++){
+            //System.out.println(ancedentai.get(j));
+            if(gdb.contains(ancedentai.get(j))){
+                //System.out.println(ancedentai.get(j));
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    public static String getFacts(){
+        String temp = "";
+        for (int i = 0; i < 3; i++){
+            temp = temp + gdb.get(i);
+            if (i < 2){
+                temp = temp + ", ";
+            }
+        }
+        return temp;
+    }
+
+    public  static String getGdb(){
+        String temp = "";
+        for (int i = 3; i < gdb.size(); i++){
+            temp = temp + gdb.get(i);
+            if (i < gdb.size() - 1){
+                temp = temp + ", ";
+            }
+        }
+        return temp;
+    }
+
     public static void main(String args []) throws Exception{
         readFromFile();
         dataOutput();
+        for (int i = 0; i < facts.length; i++){
+            gdb.add(facts[i]);
+        }
+        System.out.println("\n2 DALIS. Vykdymas \n");
+        forwardChaining();
     }
 
 
