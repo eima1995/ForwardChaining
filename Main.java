@@ -2,14 +2,21 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class Main {
-    public static String fileName = "pvz.txt";
+      public static String fileName = "test1.txt";
+   // public static String fileName = "test2.txt";
+   // public static String fileName = "test3.txt";
+    //public static String fileName = "test4.txt";
+    //  public static String fileName = "test5.txt";
+
     public static String end;
     public static String[] facts;
     public static ArrayList<Production> pr = new ArrayList<Production>();
     public static String tab = "   ";
     public static String tab1 = "  ";
     public static ArrayList<String> gdb =  new ArrayList<String>();
+    public static ArrayList<String> patch = new ArrayList<String>();
     public static int iteration = 0;
+    public static boolean goal = false;
 
     public static void readFromFile() throws Exception{
         FileReader fr = new FileReader(fileName);
@@ -68,35 +75,61 @@ public class Main {
     }
 
     public static void forwardChaining(){
-        int index;
-        System.out.println(tab + (++iteration) +" ITERACIJA");;
-        for (int i = 0; i < pr.size(); i++){
-            if((index = contain(pr.get(i).getAntecedentai())) != -1){
-                if(pr.get(i).getFlag()) {
-                    System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentai().get(index) + "->" + pr.get(i).getKonsekventas() + " praleidžiame, nes pakelta flag1.");
-                }else{
-                    pr.get(i).setFlag();
-                    gdb.add(pr.get(i).getKonsekventas());
-                    System.out.println(tab + tab1 + "R" + (i + 1)  + ":" + pr.get(i).getAntecedentai().get(index) + "->" + pr.get(i).getKonsekventas() + " taikome. Pakeliame flag1. " + "Faktai " + getFacts() + " ir "  + getGdb() + ".");
-                    forwardChaining();
+        System.out.println("\n" + tab + (++iteration) +" ITERACIJA");
+            for (int i = 0; i < pr.size(); i++){
+                if(!goal){
+                    if(contain(pr.get(i).getAntecedentai())){
+                        if(pr.get(i).getFlag() || pr.get(i).getFlag2() ) {
+                            if(pr.get(i).getFlag()){
+                                System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt2() + "->" + pr.get(i).getKonsekventas() + " praleidžiame, nes pakelta flag1.");
+                            }else{
+                                System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt2() + "->" + pr.get(i).getKonsekventas() + " praleidžiame, nes pakelta flag2.");
+                            }
+                        }else if(gdb.contains(pr.get(i).getKonsekventas())){
+                            //System.out.println(pr.get(i).getKonsekventas());
+                            pr.get(i).setFlag2();
+                            System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt2() + "->" + pr.get(i).getKonsekventas() + " netaikome, nes konsekventas faktuose. Pakeliame flag2.");
+                        }else{
+                            pr.get(i).setFlag();
+                            gdb.add(pr.get(i).getKonsekventas());
+                            patch.add("R" +  (i + 1));
+                            System.out.println(tab + tab1 + "R" + (i + 1)  + ":" + pr.get(i).getAntecedentaiSt2() + "->" + pr.get(i).getKonsekventas() + " taikome. Pakeliame flag1. " + "Faktai " + getFacts() + " ir "  + getGdb() + ".");
+                            if(gdb.contains(end)){
+                                System.out.println(tab + tab1 +"Tikslas gautas.");
+                                goal = true;
+                            }else{
+                                forwardChaining();
+                            }
+                        }
+                    }else{
+                        System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt2() + "->" + pr.get(i).getKonsekventas() + " netaikome, nes trūksta " + missingFacts(pr.get(i).getAntecedentai()) + ".");
+                    }
                 }
-            }else{
-                //System.out.println("indeksas" + i);
-                System.out.println(tab + tab1 + "R" + (i + 1) + ":" + pr.get(i).getAntecedentaiSt() + "->" + pr.get(i).getKonsekventas() + " netaikome, nes trūksta " + pr.get(i).getAntecedentaiSt() + ".");
-                //forwardChaining();
             }
-        }
     }
 
-    public static int contain(ArrayList<String> ancedentai){
+    public static boolean contain(ArrayList<String> ancedentai){
+        int cont = 0;
         for (int j = 0; j < ancedentai.size(); j++){
             //System.out.println(ancedentai.get(j));
             if(gdb.contains(ancedentai.get(j))){
-                //System.out.println(ancedentai.get(j));
-                return j;
+                cont ++;
+            }
+            if(cont == ancedentai.size()){
+                return true;
             }
         }
-        return -1;
+        return false;
+    }
+
+    public static String missingFacts(ArrayList<String> ancedentai){
+        String temp = "";
+        for (int j = 0; j < ancedentai.size(); j++) {
+            if (!gdb.contains(ancedentai.get(j))) {
+                temp = temp + " " + ancedentai.get(j);
+            }
+        }
+        return temp;
     }
 
     public static String getFacts(){
@@ -127,10 +160,22 @@ public class Main {
         for (int i = 0; i < facts.length; i++){
             gdb.add(facts[i]);
         }
-        System.out.println("\n2 DALIS. Vykdymas \n");
+        System.out.println("\n2 DALIS. Vykdymas");
         forwardChaining();
+        System.out.println("\n3 DALIS. Rezultatai");
+        if (goal) {
+            System.out.println(tab + "1) Tikslas " + end + " išvestas");
+            String temp = "";
+            for(int i = 0; i < patch.size(); i++){
+                temp = temp + patch.get(i);
+                if (i < patch.size() - 1){
+                    temp = temp + ", ";
+                }
+            }
+            System.out.println(tab + "2) Kelias: " + temp + ".");
+        }else{
+            System.out.println("Tikslas nerastas");
+        }
     }
-
-
 }
 
